@@ -11,10 +11,15 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
 
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.host))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name, durable=True, arguments={'x-queue-type': 'quorum'})
+        self.channel.queue_declare(queue=self.queue_name)
 
     def start_consuming(self, on_message_callback):
-        self.channel.basic_consume(queue=self.queue_name, on_message_callback=on_message_callback)
+        def callback(ch, method, properties, body):
+            ack = ch.basic_ack
+            nack = ch.basic_nack
+            on_message_callback(body, ack, nack)
+        self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback)
+        self.channel.start_consuming()
 
     def stop_consuming(self):
         self.channel.stop_consuming()
