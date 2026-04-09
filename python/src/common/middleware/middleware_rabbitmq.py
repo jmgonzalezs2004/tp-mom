@@ -78,7 +78,7 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             self.channel = self.connection.channel()
 
             # De manera predeterminada usa Exchange Directo, tambien existe topic, headers y fanout.
-            # Voy a basarme en el caso mas sencillo y usar fanout.
+            # Los test requieren de tipo directo, para poder segmentar por routing_key
             self.channel.exchange_declare(exchange_name = self.exchange_name,exchange_type='fanout')
         except AMQPError as e:
             raise MessageMiddlewareDisconnectedError()
