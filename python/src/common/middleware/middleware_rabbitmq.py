@@ -5,22 +5,27 @@ from .middleware import MessageMiddlewareQueue, MessageMiddlewareExchange
 
 class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
     def __init__(self, host, queue_name):
-        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-        channel = connection.channel()
+
+        self.host = host
+        self.queue_name = queue_name
+
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.host))
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue=self.queue_name, durable=True, arguments={'x-queue-type': 'quorum'})
 
     def start_consuming(self, on_message_callback):
-        pass
+        self.channel.basic_consume(queue=self.queue_name, on_message_callback=on_message_callback)
 
     def stop_consuming(self):
-        pass
+        self.channel.stop_consuming()
 
     def send(self, message):
-        pass
+        self.channel.basic_publish(exchange='',
+                              routing_key=self.queue_name,
+                              body=message)
 
     def close(self):
-        pass
-
-
+        self.connection.close()
 
 class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
     def __init__(self, host, exchange_name, routing_keys):
