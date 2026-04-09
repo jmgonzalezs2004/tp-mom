@@ -15,8 +15,8 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
 
     def start_consuming(self, on_message_callback):
         def callback(ch, method, properties, body):
-            ack = ch.basic_ack
-            nack = ch.basic_nack
+            ack = lambda:ch.basic_ack(delivery_tag = method.delivery_tag)
+            nack = lambda:ch.basic_nack(delivery_tag = method.delivery_tag)
             on_message_callback(body, ack, nack)
         self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback)
         self.channel.start_consuming()
