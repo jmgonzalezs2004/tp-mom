@@ -90,7 +90,7 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
 
             for routing in self.routing:
                 self.channel.queue_bind(
-                    exchange=self.exchange_name,
+                    exchange=self.exchange,
                     queue=queue_name,
                     routing_key=routing
             )
@@ -135,6 +135,6 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
     ## para asegurarse de flushear los mensajes y no tener comportamiento inesperado
     def __del__(self):
         try:
-                self.close()
+            self.close()
         except Exception:
            pass 
