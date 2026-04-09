@@ -71,15 +71,15 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
 class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
     def __init__(self, host, exchange_name, routing_keys):
         self.host = host
-        self.exchange = exchange_name
-        self.routing = routing_keys
+        self.exchange_name = exchange_name
+        self.routing_keys = routing_keys
         try:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.host))
             self.channel = self.connection.channel()
 
             # De manera predeterminada usa Exchange Directo, tambien existe topic, headers y fanout.
             # Los test requieren de tipo directo, para poder segmentar por routing_key
-            self.channel.exchange_declare(exchange=self.exchange, exchange_type="direct")
+            self.channel.exchange_declare(exchange=self.exchange_name, exchange_type="direct")
         except AMQPError as e:
             raise MessageMiddlewareDisconnectedError()
 
@@ -88,9 +88,9 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             result = self.channel.queue_declare(queue='', exclusive=True)
             queue_name = result.method.queue
 
-            for routing in self.routing:
+            for routing in self.routing_keys:
                 self.channel.queue_bind(
-                    exchange=self.exchange,
+                    exchange=self.exchange_name,
                     queue=queue_name,
                     routing_key=routing
             )
@@ -115,8 +115,8 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
 
     def send(self, message):
         try:
-            for routing in self.routing:
-                self.channel.basic_publish(exchange=self.exchange,
+            for routing in self.routing_keys:
+                self.channel.basic_publish(exchange=self.exchange_name,
                                     routing_key=routing,
                                     body=message)
         except AMQPError as e:
