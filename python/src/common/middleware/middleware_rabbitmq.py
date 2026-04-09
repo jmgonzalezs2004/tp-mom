@@ -88,6 +88,13 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             result = self.channel.queue_declare(queue='', exclusive=True)
             queue_name = result.method.queue
 
+            for routing in self.routing:
+                self.channel.queue_bind(
+                    exchange=self.exchange_name,
+                    queue=queue_name,
+                    routing_key=routing
+            )
+        
             def callback(ch, method, properties, body):
                 ack = lambda:ch.basic_ack(delivery_tag = method.delivery_tag)
                 nack = lambda:ch.basic_nack(delivery_tag = method.delivery_tag)
@@ -108,9 +115,10 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
 
     def send(self, message):
         try:
+            for routing in self.routing:
                 self.channel.basic_publish(exchange=self.exchange,
-                                  routing_key=self.routing,
-                                      body=message)
+                                    routing_key=routing,
+                                    body=message)
         except AMQPError as e:
             raise MessageMiddlewareDisconnectedError()
         except Exception as e:
