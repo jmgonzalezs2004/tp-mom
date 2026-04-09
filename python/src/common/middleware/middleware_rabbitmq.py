@@ -21,7 +21,7 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
             self.channel = self.connection.channel()
             self.channel.queue_declare(queue=self.queue_name)
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
 
     def start_consuming(self, on_message_callback):
         try:
@@ -33,15 +33,15 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
             self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback)
             self.channel.start_consuming()
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
         except Exception as e:
-            raise MessageMiddlewareMessageError()
+            raise MessageMiddlewareMessageError(e)
 
     def stop_consuming(self):
         try:
             self.channel.stop_consuming()
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
 
     def send(self, message):
         try:
@@ -49,15 +49,15 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
                                   routing_key=self.queue_name,
                                   body=message)
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
         except Exception as e:
-            raise MessageMiddlewareMessageError()
+            raise MessageMiddlewareMessageError(e)
 
     def close(self):
         try:
             self.connection.close()
         except AMQPError as e:
-            raise MessageMiddlewareCloseError()
+            raise MessageMiddlewareCloseError(e)
 
 
     ## No lo pedia, pero me parecio buena idea agregar close al destructor
@@ -81,7 +81,7 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             # Los test requieren de tipo directo, para poder segmentar por routing_key
             self.channel.exchange_declare(exchange=self.exchange_name, exchange_type="direct")
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
 
     def start_consuming(self, on_message_callback):
         try:
@@ -103,15 +103,15 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
             self.channel.start_consuming()
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
         except Exception as e:
-            raise MessageMiddlewareMessageError()
+            raise MessageMiddlewareMessageError(e)
 
     def stop_consuming(self):
         try:
             self.channel.stop_consuming()
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
 
     def send(self, message):
         try:
@@ -120,15 +120,15 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
                                     routing_key=routing,
                                     body=message)
         except AMQPError as e:
-            raise MessageMiddlewareDisconnectedError()
+            raise MessageMiddlewareDisconnectedError(e)
         except Exception as e:
-            raise MessageMiddlewareMessageError()
+            raise MessageMiddlewareMessageError(e)
 
     def close(self):
         try:
             self.connection.close()
         except AMQPError as e:
-            raise MessageMiddlewareCloseError()
+            raise MessageMiddlewareCloseError(e)
 
 
     ## No lo pedia, pero me parecio buena idea agregar close al destructor
