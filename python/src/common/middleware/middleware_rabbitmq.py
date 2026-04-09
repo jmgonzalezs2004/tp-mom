@@ -3,6 +3,13 @@ Middleware RabbitMQ Implementation
 
 Provee las clases necesarias para conectar la interfaz del Middleware
 (colas y exchanges) contra un broker RabbitMQ usando la librería pika.
+
+Implemente de la manera mas simple un destructor en el que se llama a close().
+En caso de que se olvide hacer close, en algun momento el gc dara de baja y flusheara los mensajes.
+
+Una forma mejor y mas idiomatica es implementar __enter__ y __exit__ para utlizar
+la Queue dentro de un with, como vimos en clase, para asegurar el cierre y flusheo de los mensajes
+dentro de un scope concreto. Pero quise dejar la implementacion lo mas simple posible.
 """
 
 import pika
@@ -36,7 +43,6 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
 
     def start_consuming(self, on_message_callback):
         try:
-
             # pylint: disable=unused-argument
             def callback(ch, method, properties, body):
                 def ack():
