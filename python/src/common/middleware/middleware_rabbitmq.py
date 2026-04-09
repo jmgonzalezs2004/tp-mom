@@ -79,18 +79,21 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
 
             # De manera predeterminada usa Exchange Directo, tambien existe topic, headers y fanout.
             # Los test requieren de tipo directo, para poder segmentar por routing_key
-            self.channel.exchange_declare(exchange_name = self.exchange_name,exchange_type='fanout')
+            self.channel.exchange_declare(exchange=self.exchange, exchange_type="direct")
         except AMQPError as e:
             raise MessageMiddlewareDisconnectedError()
 
     def start_consuming(self, on_message_callback):
         try:
+            result = self.channel.queue_declare(queue='', exclusive=True)
+            queue_name = result.method.queue
+
             def callback(ch, method, properties, body):
                 ack = lambda:ch.basic_ack(delivery_tag = method.delivery_tag)
                 nack = lambda:ch.basic_nack(delivery_tag = method.delivery_tag)
                 on_message_callback(body, ack, nack)
 
-            self.channel.basic_consume(queue=self.queue_name, on_message_callback=callback)
+            self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
             self.channel.start_consuming()
         except AMQPError as e:
             raise MessageMiddlewareDisconnectedError()
@@ -105,9 +108,9 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
 
     def send(self, message):
         try:
-            self.channel.basic_publish(exchange=self.exchange,
+                self.channel.basic_publish(exchange=self.exchange,
                                   routing_key=self.routing,
-                                  body=message)
+                                      body=message)
         except AMQPError as e:
             raise MessageMiddlewareDisconnectedError()
         except Exception as e:
@@ -124,6 +127,6 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
     ## para asegurarse de flushear los mensajes y no tener comportamiento inesperado
     def __del__(self):
         try:
-            self.close()
+                self.close()
         except Exception:
            pass 
